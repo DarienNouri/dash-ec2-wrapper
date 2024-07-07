@@ -16,6 +16,7 @@ import logging
 from typing import Optional
 from dash import Dash as OriginalDash
 from dotenv import load_dotenv
+import yaml
 
 DEFAULT_APP_NAME = 'app'
 DEFAULT_PORT = 8050
@@ -26,19 +27,39 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 class DashConfig:
-    def __init__(self, env_path: Optional[str] = None):
-        load_dotenv(dotenv_path=env_path) if env_path else load_dotenv()
-        self.port = int(os.getenv('PORT', DEFAULT_PORT))
-        self.app_type = os.getenv('APPTYPE', 'dash')
-        self.app_name = os.getenv('APPNAME', DEFAULT_APP_NAME)
-        self.host = os.getenv('HOST', DEFAULT_HOST)
-        logger.info(f"Loaded configuration: PORT={self.port}, APPTYPE={self.app_type}, APPNAME={self.app_name}")
+    def __init__(self, env_path: Optional[str] = None, yaml_path: Optional[str] = 'app_settings.yml'):
+        self.port = DEFAULT_PORT
+        self.app_name = DEFAULT_APP_NAME
+        self.host = DEFAULT_HOST
 
-    def validate(self):
-        if self.app_type != "dash":
-            logger.error("APPTYPE must be set to 'dash' in the .env file")
-            raise ValueError("APPTYPE must be set to 'dash' in the .env file")
-        logger.info("Configuration validated successfully")
+        # Try to load from YAML file
+        if yaml_path:
+            try:
+                with open(yaml_path, 'r') as f:
+                    yaml_config = yaml.safe_load(f)
+                    self.port = yaml_config.get('PORT', DEFAULT_PORT)
+                    self.app_name = yaml_config.get('APPNAME', DEFAULT_APP_NAME)
+                    self.host = yaml_config.get('HOST', DEFAULT_HOST)
+            except FileNotFoundError:
+                logger.warning(f"YAML file not found: {yaml_path}")
+            except Exception as e:
+                logger.warning(f"Error loading YAML file: {e}")
+        else:
+            # If YAML file doesn't exist or doesn't have required keys, load from .env
+            load_dotenv(dotenv_path=env_path) if env_path else load_dotenv()
+            self.port = int(os.getenv('PORT', self.port))
+            self.app_type = os.getenv('APPTYPE', self.app_type)
+            self.app_name = os.getenv('APPNAME', self.app_name)
+            self.host = os.getenv('HOST', self.host)
+
+        logger.info(f"Loaded configuration: PORT={self.port}, APPTYPE={self.app_type}, APPNAME={self.app_name}")
+        
+        def validate(self):
+            if self.app_type != "dash":
+                logger.error("APPTYPE must be set to 'dash' in the .env file or YAML file")
+                raise ValueError("APPTYPE must be set to 'dash' in the .env file or YAML file")
+            logger.info("Configuration validated successfully")
+
 
 class Dash(OriginalDash):
     """
