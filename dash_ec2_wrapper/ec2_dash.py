@@ -76,6 +76,7 @@ class Dash(OriginalDash):
         name: str,
         env_path: Optional[str] = None,
         url_base_pathname: Optional[str] = None,
+        serve_locally: bool = True,
         **kwargs
     ):
         """
@@ -93,9 +94,16 @@ class Dash(OriginalDash):
 
         if url_base_pathname is None:
             url_base_pathname = f'/{self.params.app_name}/'
+        
+        self.serve_locally = serve_locally
+        
         logger.info(f"Using URL base pathname: {url_base_pathname}")
 
-        super().__init__(name, url_base_pathname=url_base_pathname, **kwargs)
+        super().__init__(name, 
+                         url_base_pathname=url_base_pathname, 
+                         serve_locally=serve_locally,
+                         routes_pathname_prefix=url_base_pathname,
+                         **kwargs)
         logger.info("Dash app initialized successfully")
 
     def run(self, debug: bool = False, **kwargs) -> None:
