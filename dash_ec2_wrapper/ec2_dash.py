@@ -17,8 +17,9 @@ from typing import Optional
 from dash import Dash as OriginalDash
 from dotenv import load_dotenv
 
-DEFAULT_PORT = 8050
 DEFAULT_APP_NAME = 'app'
+DEFAULT_PORT = 8050
+DEFAULT_HOST = '0.0.0.0'
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -30,6 +31,7 @@ class DashConfig:
         self.port = int(os.getenv('PORT', DEFAULT_PORT))
         self.app_type = os.getenv('APPTYPE', 'dash')
         self.app_name = os.getenv('APPNAME', DEFAULT_APP_NAME)
+        self.host = os.getenv('HOST', DEFAULT_HOST)
         logger.info(f"Loaded configuration: PORT={self.port}, APPTYPE={self.app_type}, APPNAME={self.app_name}")
 
     def validate(self):
@@ -62,20 +64,21 @@ class Dash(OriginalDash):
             **kwargs: Additional keyword arguments for the original Dash class.
         """
         logger.info(f"Initializing Dash app: {name}")
-        self.config = DashConfig(env_path)
-        self.config.validate()
+        self.params = DashConfig(env_path)
+        self.params.validate()
 
         if url_base_pathname is None:
-            url_base_pathname = f'/{self.config.app_name}/'
+            url_base_pathname = f'/{self.params.app_name}/'
         logger.info(f"Using URL base pathname: {url_base_pathname}")
 
         super().__init__(name, url_base_pathname=url_base_pathname, **kwargs)
         logger.info("Dash app initialized successfully")
 
     def run(self, debug: bool = False, **kwargs) -> None:
-        host = kwargs.get('host', '0.0.0.0')
-        port = kwargs.get('port', self.config.port)
-        url = f"http://{host}:{port}{self.config.app_name}/"
+        host = self.params.host
+        port = self.params.port
+        app_name = self.params.app_name
+        url = f"http://{host}:{port}/{app_name}"
         logger.info(f"Starting Dash app on {url}")
         print(f"Running app on {url}")
         try:
