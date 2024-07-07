@@ -100,7 +100,7 @@ class Dash(OriginalDash):
         logger.info(f"Using URL base pathname: {url_base_pathname}")
 
         super().__init__(name, 
-                         url_base_pathname=url_base_pathname, 
+                        #  url_base_pathname=url_base_pathname, 
                          serve_locally=serve_locally,
                          routes_pathname_prefix=url_base_pathname,
                          **kwargs)
